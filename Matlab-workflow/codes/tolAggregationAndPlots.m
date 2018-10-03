@@ -1,5 +1,21 @@
-%% Main contributors: Julien Bonnel, Dorian Cazau, Paul Nguyen HD
-function tolAggregationAndPlotsIntersites( timeAggregation, ...
+% Copyright (C) 2017-2018 Project-ODE
+%
+% This program is free software: you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation, either version 3 of the License, or
+% (at your option) any later version.
+%
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License
+% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+% Main contributors: Julien Bonnel, Dorian Cazau, Paul Nguyen HD
+
+function tolAggregationAndPlots( timeAggregation, ...
     inputTimestampFormat, timestampSegment, nfc, fc, vtol,...
     path_soundscapeResultsFigures,nameBoxplotFig, ...
     nameHeatmapFig)
@@ -12,7 +28,7 @@ function tolAggregationAndPlotsIntersites( timeAggregation, ...
 % Syntax:  tolAggregationAndPlots( timeAggregation, inputTimestampFormat,
 % timestampSegment, path_soundscapeResultsFigures,nameBoxplotFig, nameHeatmapFig)
 %
-% Input:    
+% Input:
 %      timeAggregation       - Period where TOLs are aggregated (mean)
 %      inputTimestampFormat  - Format of the stored timestamps
 %      tolAnalysis           - 0 if you do not want these plots, 1
@@ -29,14 +45,14 @@ function tolAggregationAndPlotsIntersites( timeAggregation, ...
 % NameFig
 %
 % Example:   tolAggregationAndPlots( timeAggregation, inputTimestampFormat,
-% timestampSegment, path_soundscapeResultsFigures,nameBoxplotFig, 
+% timestampSegment, path_soundscapeResultsFigures,nameBoxplotFig,
 % nameHeatmapFig)
 
-% Note : 
+% Note :
 %
-% Author: 
-% email: 
-% date of creation: 
+% Author:
+% email:
+% date of creation:
 % Modified [date]
 %   [COMMENTS ON MODIFICATIONS]
 
@@ -74,7 +90,7 @@ linearDF = varfun(linearTodB,dataframe); % dB to linear to aggregate values
 aggregationOnLinearDF = retime(linearDF,timeAggregation,'mean'); % Aggregation following the timeAggregation chosen by the user
 aggregatedDF = varfun(dbToLinear,aggregationOnLinearDF); % linear to dB values
 aggregatedTOL = aggregatedDF.Variables; % Extract aggregated tol values in a matrix
-[nbRows,nbCols] = size(aggregatedTOL); 
+[nbRows,nbCols] = size(aggregatedTOL);
 timestampVector = aggregatedDF.Time(1:end,1); % Extract timestamps from the DF
 centerFreq = fc(1:nfc); % Extract midfrequencies of comuted tols
 vecFreqBandEdgesTO = [centerFreq*10^-0.05 max(centerFreq)*10^0.5]; % array of bandedges freq of the TOB
@@ -85,12 +101,12 @@ aggregatedTOL = [aggregatedTOL.';aggregatedTOL(:,nbCols).'];
 %% Plots
 if (size(aggregatedTOL,1) > 1 && size(aggregatedTOL,2) > 1)
     %% Surf plot extracted from PAMGuide Viewer. function.
-%     figure('visible','on');
+    figure('visible','off');
     surf(timestampVector,vecFreqBandEdgesTO,aggregatedTOL,'EdgeColor','none');
     set(gca,'YScale','log','tickdir','out','layer','top','fontname',...
         'arial','fontsize',14);
     grid off; box on;
-    ylim([min(centerFreq)*10^-0.05 max(centerFreq)*10^0.05]);    xlim([min(timestampVector) max(timestampVector)]);    
+    ylim([min(centerFreq)*10^-0.05 max(centerFreq)*10^0.05]);    xlim([min(timestampVector) max(timestampVector)]);
     ylabel('Frequency [ Hz ]')
     title([timeAggregation ' mean 1/3 Octave Analysis'],'interpreter','none')
     view(0,90);
@@ -114,7 +130,14 @@ else
         'your analysis, please reduce your time aggredation factor.'])
 end
 
+%%
+% [group,hour,month] = findgroups(hour(dataframe.Time),day(dataframe.Time));
+% Datavg = splitapply(@mean, dataframe.Variables,group);
+% results = table(hour,month,Datavg);
+% figure
+% pcolor(results.hour,centerFreq,results.Datavg.')
+% heatmap(results.hour,centerFreq,results.Datavg.')
+
 disp('TOL analysis achieved .')
 
 end
-
