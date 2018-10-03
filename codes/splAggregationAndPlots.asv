@@ -1,0 +1,86 @@
+function splAggregationAndPlots( timeAggregation, inputTimestampFormat, timestampSegment,...
+    splAnalysis, vspl, path_soundscapeResultsFigures, nameHeatmapFig)
+% splAggregationAndPlots( timeAggregation, splAnalysis, ...
+% path_soundscapeResultsFigures, nameHeatmapFig)
+% This function enables to save heatmaps of aggregated SPL
+%
+% Syntax: splAggregationAndPlots( timeAggregation, splAnalysis, ...
+%    path_soundscapeResultsFigures, nameHeatmapFig)
+%
+% Input:
+%      splAnalysis           - 0 if you do not want these plots, 1
+%      otherwise
+%      inputTimestampFormat  - Format of the stored timestamps
+%      timestampSegment      - Array with all timestamps
+%      vspl                  - computed SPL
+%      path_soundscapeResultsFigures   - Path to the folder that will
+%      contain the generated figures
+%      nameHeatmapFig        - Name of the figure with TOL heatmaps
+%
+% Output:  None - Figures are saved with the name nameHeatmapFig
+% NameFig
+%
+% Example:   splAggregationAndPlots( timeAggregation, splAnalysis, ...
+%    path_soundscapeResultsFigures, nameHeatmapFig)
+
+% Note : 
+%
+% Author: 
+% email: 
+% date of creation: 
+% Modified [date]
+%   [COMMENTS ON MODIFICATIONS]
+
+% Other m-files required: FormatFigures.m
+% Subfunctions: none
+% MAT-files required: none
+
+
+newfunc = @(x) 10*log10(mean(10.^(x./10)));
+
+%% Extract timestamp array according to the chosen format
+if strcmp(inputTimestampFormat,'yyyy-MM-dd HH:mm:ss.SSS')
+    rowsTime = datetime(timestampSegment,'InputFormat',inputTimestampFormat);
+elseif strcmp(inputTimestampFormat,'yyyymmddHHMMSS')
+    tmpDateArray = datenum(timestampSegment,'yyyymmddHHMMSS');
+    rowsTime = datetime(tmpDateArray,'ConvertFrom','datenum');
+end
+
+
+%% Start processing
+if splAnalysis == 1
+    disp('Launching SPL analysis...')
+    
+    %% Build spl dataframe with timestamps
+    dataframeSPL = array2timetable(vspl,'RowTimes',rowsTime);
+    
+    %% Build the dataframe with timestamps as key (timetable in Matlab) (useless right now)
+%     linearDF = varfun(linearTodB,dataframeSPL); % dB to linear to aggregate values
+%     aggregationOnLinearDFSPL = retime(linearDF,timeAggregation,'mean'); % Aggregation following the timeAggregation chosen by the user
+%     aggregatedDFSPL = varfun(dbToLinear,aggregationOnLinearDFSPL); % linear to dB values
+%     aggregatedSPL = aggregatedDFSPL.Variables; % Extract aggregated tol values in an array
+%     timestampVectorSPL = aggregatedDFSPL.Time(1:end,1); % Extract timestamps from the DF
+    
+    %% Groups
+    [groupsOfAnalysis,hourOfAnalysis,dayOfAnalysis,monthOfAnalysis] = findgroups(hour(dataframeSPL.Time)...
+        ,day(dataframeSPL.Time),month(dataframeSPL.Time));
+    aggregatedData = splitapply(newfunc, dataframeSPL.Variables,groupsOfAnalysis);
+    tableResults = table(hourOfAnalysis,monthOfAnalysis,aggregatedData);
+    
+    %% Plots
+    if (size(tableResults,1) > 1 && size(tableResults,2) > 1)
+        figure('visible','off');
+        imagesc(tableResults.hourOfAnalysis,1:length(dayOfAnalysis),tableResults{:,2:end}.')
+        title(['SPL aggregated and analysis of ])
+        FormatFigures([path_soundscapeResultsFigures filesep  nameHeatmapFig]);
+
+    else
+        disp(['Your time aggregation factor  (' timeAggregation ') is too big to compute' ...
+            'your analysis, please reduce your time aggredation factor.'])
+    end
+
+    
+end
+
+end
+
