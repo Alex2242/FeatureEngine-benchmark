@@ -13,9 +13,30 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-% Main contributors: Julien Bonnel, Dorian Cazau, Paul Nguyen HD
-
 function PutTimeStamp(TimeVector,Opt)
+%PutTimeStamp(TimeVector,Opt)
+% This function enables to put timestamps on the x axis of a figure
+%
+% Syntax: PutTimeStamp(TimeVector,Opt)
+%
+% Input:    
+%      TimeVector - Spectrogram to plot
+%      Opt - Structure containing options for the computation of LTSA
+%
+% Output:   
+%      X axis with timestamps for a generated plot
+
+% Note : 
+%
+% Author: Julien Bonnel, Dorian Cazau
+% email: 
+% date of creation: 
+% Modified [date]
+%   [COMMENTS ON MODIFICATIONS]
+
+% Other m-files required: none
+% Subfunctions: none
+% MAT-files required: none
 
 if nargin<2
    Opt=[];
@@ -27,12 +48,7 @@ end
 if ~isfield(Opt,'TimeStampFormat')
     Opt.TimeStampFormat ='YYYY-mm-dd';
 end
-% if isfield(Opt,'ZoomTimeStamp')
-%     ind=TimeVector>Opt.ZoomTimeStamp(1) & ...
-%         TimeVector<Opt.ZoomTimeStamp(2);
-%     TimeVector=TimeVector(ind);
-%     xlim([Opt.ZoomTimeStamp(1);Opt.ZoomTimeStamp(2)])
-% end
+
 if ~isfield(Opt,'Change_Ytick')
     Opt.Change_Ytick=0;
 end

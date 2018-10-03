@@ -13,9 +13,32 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-% Main contributors: Julien Bonnel, Dorian Cazau, Paul Nguyen HD
-
 function FormatFigures(NameFig)
+%FormatFigures(NameFig)
+% This function enables to save the figures previously generated with a
+% specific name
+%
+% Syntax: FormatFigures(NameFig)
+%
+% Input:    
+%      NameFig       - Name of the figure to save, str
+%
+% Output:  None - Figures are saved with the name
+% NameFig
+%
+% Example:  FormatFigure('SpectrogramToSave')
+
+% Note : 
+%
+% Author: Julien Bonnel, Dorian Cazau
+% email: 
+% date of creation: 
+% Modified [date]
+%   [COMMENTS ON MODIFICATIONS]
+
+% Other m-files required: none
+% Subfunctions: none
+% MAT-files required: none
 
 box on
 

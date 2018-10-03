@@ -13,9 +13,32 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-% Main contributors: Julien Bonnel, Dorian Cazau
-
 function gplotmatrix_jb(dataMatrix, vecIndex, names)
+%gplotmatrix_jb(dataMatrix, vecIndex, names)
+% This function enables to create scattering plots and histograms of each
+% variable available in dataMatrix against each other
+%
+% Syntax: gplotmatrix_jb(dataMatrix, vecIndex, names)
+%
+% Input:    
+%      dataMatrix - matrix of variables to plot
+%      vecIndex - columns of dataMatrix to plot
+%      names - names of variable availabble in dataMatrix
+
+% Output:   subplots 
+%
+
+% Note : 
+%
+% Author: Julien Bonnel, Dorian Cazau
+% email: 
+% date of creation: 
+% Modified [date]
+%   [COMMENTS ON MODIFICATIONS]
+
+% Other m-files required: none
+% Subfunctions: none
+% MAT-files required: none
 
 n_response=length(vecIndex);
 iplot=1;
