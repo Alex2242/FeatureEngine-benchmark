@@ -36,7 +36,7 @@ delimiter = ';';
 formatSpec = '%s%*s%*s%*s%*s%*s%*s%*s%*s%s%s%*s%*s%*s%*s%*s%*s%*s%*s%*s%[^\n\r]';
 
 %% Open the text file.
-fileID = fopen(filename,'r');
+fileID = fopen(timestampFilename,'r');
 
 %% Read columns of data according to format string.
 % This call is based on the structure of the file used to generate this

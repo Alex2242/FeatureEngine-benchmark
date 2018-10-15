@@ -15,7 +15,7 @@
 
 % Main contributors: Julien Bonnel, Dorian Cazau, Paul Nguyen HD
 
-[x,~]=audioread([path_wavData wavDataFiles(ww).name]);
+[x,~]=audioread([pathWavData wavDataFiles(ww).name]);
 
 %% added
 fprintf('Processing file %s \n', wavDataFiles(ww).name)
