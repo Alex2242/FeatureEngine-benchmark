@@ -1,1 +1,11 @@
 *.asv
+
+*.class
+*.cache
+*.log
+
+target
+project/target
+spark-warehouse
+.idea
+
