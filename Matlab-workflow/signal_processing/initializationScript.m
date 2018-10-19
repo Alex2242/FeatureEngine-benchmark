@@ -50,3 +50,6 @@ OptLSTA.InterFreqDescriptors=200;
 OptLSTA.NberLabelX=20;
 OptLSTA.TimeStampFormat='yyyy/mm/dd:HH';
 OptLSTA.MV_Apply_MedFilt = 40;
+
+%% Variable to list missing file or incompatible wav file
+listMssingTimestamp = [];
