@@ -15,8 +15,8 @@
 
 % Main contributors: Julien Bonnel, Dorian Cazau, Paul Nguyen HD
 
-%% Taken from MathWorks to reduce run time
-function [mypsd_v1] = myPwelchFunction(data, nfft, nOverlap, w, fs)
+%% Taken from MathWorks to reduce run time and PAMGuide from Merchant et al. 2015
+function [psd] = myPwelchFunction(data, nfft, nOverlap, w, fs)
 
     if (mod(nfft, 2) == 0)
         toKeep = nfft/2+1;
@@ -26,27 +26,42 @@ function [mypsd_v1] = myPwelchFunction(data, nfft, nOverlap, w, fs)
 
     nbSegments = fix((length(data) - nOverlap) / (nfft - nOverlap));
 
-    % preallocate the space for the psd results
-    mypsd = zeros(toKeep, nbSegments);
-
-    % step 1: loop through the data, 512 points at a time, with 256 points overlap
-    for i = 0 : nbSegments-1
-        % step 2: apply a hamming window
-        temp = data(1 + (nfft - nOverlap) * i : nfft + i * (nfft - nOverlap))' .* w;
-        % step 3: calculate FFT and take just the first half
-        temp = fft(temp);
-        % step 4: calculate the "periodogram" by taking the absolute value squared
-        temp = abs(temp(1 : toKeep)) .^ 2;
-        % save the results in the storage variable
-        mypsd(:, i+1) = temp;
+    % grid whose rows are each (overlapped) segment for analysis
+    xgrid = buffer(data, nfft, nOverlap, 'nodelay');
+    clear xbit
+    
+    if xgrid(length(xgrid(:, 1)), nfft) == 0 %remove final segment if not full
+        xgrid = xgrid(1 : length(xgrid(:, 1)) -1, :);
     end
+
+    M = length(xgrid(1,:)); %total number of data segments
+
+    %% Apply window function (corresponds to EQUATION 6 in PAMGuide tutorial and 3.2 in the User doc)
+    xgrid = xgrid .* repmat(w, 1, M); %multiply segments by window function
+
+    %% Compute DFT (EQUATION 7 in PAMGuide tutorial and 4.1 in the User doc)
+
+    X = abs(fft(xgrid)); %calculate DFT of each data segment
+    clear xgrid
+    
+    % [ if a frequency-dependent correction is being applied to the signal,
+    %   e.g. frequency-dependent hydrophone sensitivity, it should be applied
+    %   here to each frequency bin of the DFT ]
+
+
+    %% Compute power spectrum (EQUATION 8 in PAMGuide tutorial and 4.2 in the User doc)
+
+    P = X(1 : toKeep, :) .^ 2; % power spectrum = square of amplitude
+    clear X
     % step 5: take the average of all the periodograms
-    mypsd_v1 = mean(mypsd, 2);
+    psd = mean(P, 2);
+    clear P
     % throw away the 2nd half of mypsd
     %  mypsd_v1 = mypsd_v1(1:toKeep);
     % normalizing factor
-    mypsd_v1 = mypsd_v1 / (fs * sum(w .^ 2));
+    psd = psd / (fs * sum(w .^ 2));
     % ignore the DC and Nyquist value
-    mypsd_v1(2 : end-1) = mypsd_v1(2 : end-1) * 2;
-
+    psd(2 : end-1) = psd(2 : end-1) * 2;
+    
+    
 end
