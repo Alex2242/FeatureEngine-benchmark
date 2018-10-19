@@ -44,7 +44,6 @@ path_acousticFeatures = strcat('.', filesep, 'acousticFeatures', filesep);
 addpath(genpath(strcat('.', filesep, 'misc_code', filesep)))
 addpath(genpath(strcat('.', filesep, 'signal_processing', filesep)))
 addpath(genpath(strcat('.', filesep, 'aux_data_processing', filesep)))
-addpath(genpath(strcat('.', filesep, 'ui', filesep)))
 
 pathWavData = strcat(...
     '/home/datawork-alloha-ode/Datasets/SPM/PAM/SPMAural', siteToProcess,...
@@ -52,60 +51,61 @@ pathWavData = strcat(...
 
 % List all files in folder
 wavDataFiles = dir(strcat(pathWavData, '*.WAV'));
-wavDataFiles = wavDataFiles(1 : min(length(wavDataFiles), NberMaxFile));
+wavDataFiles = wavDataFiles(1 : min(length(wavDataFiles), nfilesToProcess));
 
-Nfile = size(wavDataFiles, 1);
-disp(Nfile)
+disp(nfilesToProcess)
 info = audioinfo(strcat(pathWavData, wavDataFiles(1).name));
 
 initializationScript
 
 % variable initialization
+gain = [];
 vPSD = [];
 vtol = [];
 vspl = [];
 timestampSegment = [];
-timestampSegment1 = [];
 
-Fs=info.SampleRate;
-nIntegWin = round(nIntegWin_sec * Fs); % in samples, size of integration window
-w = hamming(nFFT).'; % window used for windowing
-fPSD = psdfreqvec('npts', nFFT, 'Fs', Fs, 'Range', 'half'); % frequency vector
-
-% prepare timestamp reading
-filename = strcat(...
-    '/home/datawork-alloha-ode/Datasets/SPM/PAM/Metadata_SPMAural',...
-    siteToProcess, yearToProcess, '.csv');
-
-Nfile = nfilesToProcess;
+fs = info.SampleRate;
+nIntegWin = round(nIntegWin_sec * fs); % in samples, size of integration window
+w = hamming(nFFT); % window used for windowing
+fPSD = psdfreqvec('npts', nFFT, 'Fs', fs, 'Range', 'half'); % frequency vector
 
 % this might not be the correct path on datarmor !!!
 timestampFilename = '/home/datawork-alloha-ode/Datasets/SPM/PAM/Metadata_SPMAuralA2010.csv';
-readTimestampAURAL
+delimiter = ';'; % delimiter in CSV file
+% Format string for each line of text:
+%   column1: text (%s)
+%	column10: text (%s)
+%   column11: text (%s)
+% For more information, see the TEXTSCAN documentation.
+formatSpec = '%s%*s%*s%*s%*s%*s%*s%*s%*s%s%s%*s%*s%*s%*s%*s%*s%*s%*s%*s%[^\n\r]';
+timestampAURAL = readTimestampAURAL(timestampFilename, nfilesToProcess, formatSpec, delimiter);
 
-for ww=1:Nfile
+
+for ww = 1 : nfilesToProcess
 
     %% pre-processing (read and add gain if any)
-    preProcessing
+    [gainedSignal, listMssingTimestamp] = readAndAddGainToData(pathWavData, wavDataFiles(ww).name,...
+            listMssingTimestamp, timestampAURAL, gain);
 
     %% segmentation
     k = fix((length(x)) / (nIntegWin));
     xStart = 1 : nIntegWin : k*(nIntegWin);
     xEnd = xStart + nIntegWin - 1;
 
-    for indIntegWin = 1:k
+    for indIntegWin = 1 : k
 				% Slice audio to process in integration window
         xint = x(xStart(indIntegWin) : xEnd(indIntegWin));
 
 				% Extract timestamp
         ddd = datestr(addtodate(...
-                tstartfile, round(1000 * xStart(indIntegWin) / Fs),...
+                tstartfile, round(1000 * xStart(indIntegWin) / fs),...
             'millisecond'), 'yyyymmddHHMMSS');
         timestampSegment = [timestampSegment ; {ddd}];
 
         %% feature computation and integration
         % PSD
-        vPSD_int=myPwelchFunction(xint, nFFT, nOverlapFFT, w, Fs);
+        vPSD_int=myPwelchFunction(xint, nFFT, nOverlapFFT, w, fs);
         vPSD = [vPSD; vPSD_int'];
 
         % SPL
@@ -125,5 +125,7 @@ fprintf('End of computations')
 % Save elapsed time for Nfile
 simulation_results = [nfilesToProcess, elapsetipeSoundscapeWorkflow];
 dlmwrite(...
-    '/home/datawork-alloha-ode/results_matlab/simulaton_results_AuralA_2010_512_60_0.csv',...
+    strcat('/home/datawork-alloha-ode/results_matlab/simulaton_results_Aural',...
+    siteToProcess, '_', yearToProcess, '_', num2str(nFFT), '_',...
+    num2str(nIntegWin_sec), '_', num2str(nOverlapFFT), '.csv'),...
     simulation_results, '-append')
