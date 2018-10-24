@@ -23,6 +23,23 @@ clear
 
 timeToBegin = tic;
 
+%% init parameters
+
+nFFT = 512; % short window, in samples
+nIntegWin_sec = 10*60; % long window, in seconds
+nOverlapFFT = nFFT / 2; %%% in samples
+
+% SPL
+f1 = 0; % frequency bands used to filter SPL, e.g. the first band is [30-80] Hz, the second [10-500] Hz ...
+f2 = 40000;
+
+% TOL parameters
+lcut = 0;
+hcut = 100000000;
+
+% feature augmentation
+maxTimestampMatching = 3600 * 24; % maximum interval (in sec) to match an acoustic data with an env data
+
 % user-defined parameters
 siteToProcess = 'A';
 yearToProcess = '2010';
@@ -31,7 +48,7 @@ nfilesToProcess = 1;
 % number of file to process. If Inf, all files will be processed
 NberMaxFile = 1;
 
-%% initialization
+%% define data location and read metadata
 
 format short
 
@@ -56,9 +73,11 @@ wavDataFiles = wavDataFiles(1 : min(length(wavDataFiles), nfilesToProcess));
 disp(nfilesToProcess)
 info = audioinfo(strcat(pathWavData, wavDataFiles(1).name));
 
-initializationScript
 
-% variable initialization
+%% variable initialization
+
+% Variable to list missing file or incompatible wav file
+listMssingTimestamp = [];
 gain = [];
 vPSD = [];
 vtol = [];
@@ -81,6 +100,7 @@ delimiter = ';'; % delimiter in CSV file
 formatSpec = '%s%*s%*s%*s%*s%*s%*s%*s%*s%s%s%*s%*s%*s%*s%*s%*s%*s%*s%*s%[^\n\r]';
 timestampAURAL = readTimestampAURAL(timestampFilename, nfilesToProcess, formatSpec, delimiter);
 
+%% Compute
 
 for ww = 1 : nfilesToProcess
 
@@ -113,16 +133,16 @@ for ww = 1 : nfilesToProcess
     end
 end
 
-% Save all features and corresponding timestamps
+%% Save all features and corresponding timestamps
 % save(strcat(path_acousticFeatures, 'PSD.mat'), ...
 %     'vPSD', 'vspl', 'timestampSegment', 'fPSD', '-v7.3');
 
-% Compute elapsed time
+%% Compute elapsed time
 elapsetipeSoundscapeWorkflow = toc(timeToBegin);
 fprintf('Elapsed Time: %d', elapsetipeSoundscapeWorkflow);
 fprintf('End of computations')
 
-% Save elapsed time for Nfile
+%% Save elapsed time for Nfile
 simulation_results = [nfilesToProcess, elapsetipeSoundscapeWorkflow];
 dlmwrite(...
     strcat('/home/datawork-alloha-ode/results_matlab/simulaton_results_Aural',...
