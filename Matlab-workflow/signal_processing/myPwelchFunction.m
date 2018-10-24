@@ -16,33 +16,36 @@
 % Main contributors: Julien Bonnel, Dorian Cazau, Paul Nguyen HD
 
 %% Taken from MathWorks to reduce run time and PAMGuide from Merchant et al. 2015
-function [psd] = myPwelchFunction(data, nfft, nOverlap, w, fs)
+function [welch] = myPwelchFunction(data, nfft, nOverlap, w, fs)
 
     if (mod(nfft, 2) == 0)
-        toKeep = nfft/2+1;
+        spectrumSize = nfft/2 + 1;
     else
-        toKeep = nfft/2;
+        spectrumSize = nfft/2;
     end
 
-    nbSegments = fix((length(data) - nOverlap) / (nfft - nOverlap));
+    nbSegmentsPredicted = fispectrum((length(data) - nOverlap) / (nfft - nOverlap));
 
     % grid whose rows are each (overlapped) segment for analysis
-    xgrid = buffer(data, nfft, nOverlap, 'nodelay');
-    clear xbit
+    segmentedSignal = buffer(data, nfft, nOverlap, 'nodelay');
     
-    if xgrid(length(xgrid(:, 1)), nfft) == 0 %remove final segment if not full
-        xgrid = xgrid(1 : length(xgrid(:, 1)) -1, :);
+    if segmentedSignal(length(segmentedSignal(:, 1)), nfft) == 0 %remove final segment if not full
+        segmentedSignal = segmentedSignal(1 : length(segmentedSignal(:, 1)) -1, :);
     end
 
-    M = length(xgrid(1,:)); %total number of data segments
+    % total number of data segments
+    nbSegments = length(segmentedSignal(1,:));
+
+    if (nbSegments ~= nbSegmentsPredicted)
+        MEspectrumception("benchmark:welch", "Unespectrumpected number of segment mismatch")
+    end
 
     %% Apply window function (corresponds to EQUATION 6 in PAMGuide tutorial and 3.2 in the User doc)
-    xgrid = xgrid .* repmat(w, 1, M); %multiply segments by window function
+    segmentedSignal = segmentedSignal .* repmat(w, 1, nbSegments); %multiply segments by window function
 
     %% Compute DFT (EQUATION 7 in PAMGuide tutorial and 4.1 in the User doc)
 
-    X = abs(fft(xgrid)); %calculate DFT of each data segment
-    clear xgrid
+    spectrum = abs(fft(segmentedSignal)); %calculate DFT of each data segment
     
     % [ if a frequency-dependent correction is being applied to the signal,
     %   e.g. frequency-dependent hydrophone sensitivity, it should be applied
@@ -51,17 +54,17 @@ function [psd] = myPwelchFunction(data, nfft, nOverlap, w, fs)
 
     %% Compute power spectrum (EQUATION 8 in PAMGuide tutorial and 4.2 in the User doc)
 
-    P = X(1 : toKeep, :) .^ 2; % power spectrum = square of amplitude
-    clear X
-    % step 5: take the average of all the periodograms
-    psd = mean(P, 2);
-    clear P
-    % throw away the 2nd half of mypsd
-    %  mypsd_v1 = mypsd_v1(1:toKeep);
-    % normalizing factor
-    psd = psd / (fs * sum(w .^ 2));
+    % throw away the 2nd half of the spectrum & compute power spectrum
+    powerSpectrum = spectrum(1 : spectrumSize, :) .^ 2; % power spectrum = square of amplitude
+    
+    % take the average of all the periodograms
+    welchNonNormalized = mean(powerSpectrum, 2);
+    
+    % normalize for power spectral density
+    welch = welchNonNormalized / (fs * sum(w .^ 2));
+    
     % ignore the DC and Nyquist value
-    psd(2 : end-1) = psd(2 : end-1) * 2;
+    welch(2 : end-1) = welch(2 : end-1) * 2;
     
     
 end
