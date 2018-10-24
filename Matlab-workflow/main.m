@@ -25,9 +25,12 @@ timeToBegin = tic;
 
 %% init parameters
 
-nFFT = 512; % short window, in samples
-nIntegWin_sec = 10*60; % long window, in seconds
-nOverlapFFT = nFFT / 2; %%% in samples
+% short window, in samples
+nFFT = 512; 
+% long window, in seconds
+nIntegWin_sec = 10*60;
+% in samples
+nOverlapFFT = nFFT / 2;
 
 % SPL
 f1 = 0; % frequency bands used to filter SPL, e.g. the first band is [30-80] Hz, the second [10-500] Hz ...
@@ -38,7 +41,8 @@ lcut = 0;
 hcut = 100000000;
 
 % feature augmentation
-maxTimestampMatching = 3600 * 24; % maximum interval (in sec) to match an acoustic data with an env data
+% maximum interval (in sec) to match an acoustic data with an env data
+maxTimestampMatching = 3600 * 24;
 
 % user-defined parameters
 siteToProcess = 'A';
@@ -50,6 +54,7 @@ NberMaxFile = 1;
 
 %% define data location and read metadata
 
+% define print format
 format short
 
 % default paths
@@ -125,7 +130,7 @@ for ww = 1 : nfilesToProcess
 
         %% feature computation and integration
         % PSD
-        vPSD_int=myPwelchFunction(xint, nFFT, nOverlapFFT, w, fs);
+        vPSD_int = myPwelchFunction(xint, nFFT, nOverlapFFT, w, fs);
         vPSD = [vPSD; vPSD_int'];
 
         % SPL
