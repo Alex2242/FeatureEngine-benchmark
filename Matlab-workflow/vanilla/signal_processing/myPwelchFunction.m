@@ -13,7 +13,8 @@
 % You should have received a copy of the GNU General Public License
 % along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-% Main contributors: Julien Bonnel, Dorian Cazau, Paul Nguyen HD
+% Main contributors: Julien Bonnel, Dorian Cazau, Paul Nguyen HD,
+%   Alexandre Degurse
 
 %% Taken from MathWorks to reduce run time and PAMGuide from Merchant et al. 2015
 function [welch] = myPwelchFunction(data, nfft, nOverlap, w, fs)
@@ -37,7 +38,7 @@ function [welch] = myPwelchFunction(data, nfft, nOverlap, w, fs)
     nbSegments = length(segmentedSignal(1,:));
 
     if (nbSegments ~= nbSegmentsPredicted)
-        MEspectrumception("benchmark:welch", "Unespectrumpected number of segment mismatch")
+        MException("benchmark:welch", "Unexpected number of segment mismatch")
     end
 
     %% Apply window function (corresponds to EQUATION 6 in PAMGuide tutorial and 3.2 in the User doc)

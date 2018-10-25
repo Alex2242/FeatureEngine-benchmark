@@ -23,6 +23,11 @@ clear
 
 timeToBegin = tic;
 
+%% include source files containing program's functions
+addpath(genpath(strcat('.', filesep, 'signal_processing', filesep)));
+addpath(genpath(strcat('.', filesep, 'aux_data_processing', filesep)));
+
+
 %% init parameters
 
 % short window, in samples
@@ -44,38 +49,19 @@ hcut = 100000000;
 % maximum interval (in sec) to match an acoustic data with an env data
 maxTimestampMatching = 3600 * 24;
 
-% user-defined parameters
-siteToProcess = 'A';
-yearToProcess = '2010';
-nfilesToProcess = 1;
-
-% number of file to process. If Inf, all files will be processed
-NberMaxFile = 1;
-
 %% define data location and read metadata
 
-% define print format
-format short
+wavFilesLocation = strcat('..', filesep, '..', filesep, 'resoures',...
+    filesep, 'sounds');
 
-% default paths
-path_auxData = strcat('.', filesep, 'auxData', filesep);
-path_soundscapeResults = strcat('.', filesep, 'soundscapeResults', filesep);
-path_acousticFeatures = strcat('.', filesep, 'acousticFeatures', filesep);
-
-% include source files containing program's functions
-addpath(genpath(strcat('.', filesep, 'misc_code', filesep)))
-addpath(genpath(strcat('.', filesep, 'signal_processing', filesep)))
-addpath(genpath(strcat('.', filesep, 'aux_data_processing', filesep)))
-
-pathWavData = strcat(...
-    '/home/datawork-alloha-ode/Datasets/SPM/PAM/SPMAural', siteToProcess,...
-    yearToProcess, filesep);
+wavFiles = struct(...
+    'name', 'test.wav'...
+);
 
 % List all files in folder
-wavDataFiles = dir(strcat(pathWavData, '*.WAV'));
-wavDataFiles = wavDataFiles(1 : min(length(wavDataFiles), nfilesToProcess));
+%wavDataFiles = dir(strcat(pathWavData, '*.WAV'));
+%wavDataFiles = wavDataFiles(1 : min(length(wavDataFiles), nfilesToProcess));
 
-disp(nfilesToProcess)
 info = audioinfo(strcat(pathWavData, wavDataFiles(1).name));
 
 
