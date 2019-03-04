@@ -103,12 +103,15 @@ def process_file(wav_file):
 if __name__ == "__main__":
     wav_files = [{
         "name": file_metadata[0],
-        "timestamp": parse(file_metadata[9] + " " + file_metadata[10] + " UTC"),
+        "timestamp": parse(
+            file_metadata[9] + " " + file_metadata[10] + " UTC"
+        ),
         "sample_rate": 32768.0,
         "wav_bits": 16,
         "n_channels": 1
-    } for file_metadata in pd.read_csv(METADATA_FILE_PATH, delimiter=";").values]
-
+    } for file_metadata in pd.read_csv(
+        METADATA_FILE_PATH, delimiter=";").values
+    ]
 
     ncpus = len(os.sched_getaffinity(0))
     with Pool(processes=ncpus) as pool:
