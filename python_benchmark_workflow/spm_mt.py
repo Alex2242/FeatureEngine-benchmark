@@ -60,7 +60,7 @@ METADATA_FILE_PATH = INPUT_BASE_DIR + "/PAM/Metadata_SPMAuralA2010.csv"
 
 SAMPLE_RATE = 32768
 CALIBRATION_FACTOR = 0.0
-SEGMENT_DURATION = 60.0
+SEGMENT_DURATION = 1.0
 SEGMENT_SIZE = int(SEGMENT_DURATION * SAMPLE_RATE)
 WINDOW_SIZE = 256
 NFFT = 256
@@ -70,7 +70,7 @@ RUN_ID = DATASET_ID + "_" + "_".join(
     [str(p) for p in [SEGMENT_SIZE, WINDOW_SIZE, WINDOW_OVERLAP, NFFT]])
 
 RESULTS_DESTINATION = OUTPUT_BASE_DIR +\
-    "/results/python_mt/{}/".format(N_NODES) + RUN_ID
+    "/results/python_mt_{}/{}/".format(N_NODES, N_THREADS) + RUN_ID
 
 
 def process_file(wav_config):

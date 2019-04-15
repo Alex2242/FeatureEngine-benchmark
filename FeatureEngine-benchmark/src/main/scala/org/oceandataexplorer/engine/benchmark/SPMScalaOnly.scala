@@ -51,13 +51,13 @@ object SPMScalaOnly {
 
 
     // Signal processing parameters
-    val recordSizeInSec = 60.0f
+    val recordSizeInSec = 1800.0f
     val soundSamplingRate = 32768.0f
     val recordSizeInFrame = (recordSizeInSec * soundSamplingRate).toInt
     val recordSize = (recordSizeInSec * soundSamplingRate).toInt
-    val windowSize = 256
-    val windowOverlap = 128
-    val nfft = 256
+    val windowSize = 4096
+    val windowOverlap = 0
+    val nfft = 4096
     val lowFreqTOL = Some(0.2 * soundSamplingRate)
     val highFreqTOL = Some(0.4 * soundSamplingRate)
 
@@ -89,7 +89,7 @@ object SPMScalaOnly {
     val runId = s"SPM${nFiles}files_${recordSizeInFrame}_${windowSize}_${windowOverlap}_$nfft"
 
     val resultsDestination = outputBaseDirFile.getCanonicalFile.toURI.toString +
-      s"/results/scala_only/$nNodes/" + runId
+      s"/results/scala_only$nThreads/$nNodes/" + runId
 
     val resultDestinationFile = new File(new URI(resultsDestination))
 

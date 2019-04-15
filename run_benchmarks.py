@@ -109,7 +109,7 @@ class FEBenchmarkRun(Benchmark):
 
     FE_JAR_LOCATION = (
         " FeatureEngine-benchmark/target/"
-        "scala-2.11/FeatureEngine-benchmark-assembly-0.1.jar "
+        "scala-2.11/FeatureEngine-benchmark-assembly-0.1-with_scala-256_128_256_1.jar "
     )
 
     def __init__(
@@ -153,7 +153,7 @@ class FEBenchmarkMinRun(SingleNodeBenchmark):
 
     FE_JAR_LOCATION = (
         " FeatureEngine-benchmark/target/"
-        "scala-2.11/FeatureEngine-benchmark-assembly-0.1.jar "
+        "scala-2.11/FeatureEngine-benchmark-assembly-0.1-with_scala-256_128_256_1.jar "
     )
 
     def __init__(
@@ -183,7 +183,7 @@ class ScalaOnlyRun(SingleNodeBenchmark):
 
     JAR_LOCATION = (
         " FeatureEngine-benchmark/target/"
-        "scala-2.11/FeatureEngine-benchmark-assembly-0.1-scala_only.jar "
+        "scala-2.11/FeatureEngine-benchmark-assembly-0.1-with_scala-256_128_256_1.jar "
     )
 
     def __init__(
@@ -197,6 +197,7 @@ class ScalaOnlyRun(SingleNodeBenchmark):
         super(ScalaOnlyRun, self).__init__(
             n_nodes, n_files, input_base_dir, output_base_dir
         )
+
         self.run_command = (
             "java -Xms64g -Xmx100g -classpath " + self.JAR_LOCATION +
             "org.oceandataexplorer.engine.benchmark.SPMScalaOnly " + self.params +
@@ -389,9 +390,12 @@ def new_mt_run(MTBaseClass, n_threads):
     Creates new multi-threaded benchmark classes given a number of threads
     """
     return type(
-        MTBaseClass.version + "_{}".format(n_threads),
+        MTBaseClass.VERSION + "_{}".format(n_threads),
         (MTBaseClass,),
-        {'N_THREADS': n_threads}
+        {
+            'N_THREADS': n_threads,
+            'VERSION': MTBaseClass.VERSION + "_{}".format(n_threads)
+        }
     )
 
 if __name__ == "__main__":
@@ -408,17 +412,20 @@ if __name__ == "__main__":
         tag = sys.argv[4]
 
     runs = {
-        1: [1, 3, 5]
+        1: [1, 2, 5, 10, 25, 50, 75, 100]
     }
 
     # put the classes that should be run during benchmark here
     benchmarks = [
-        ScalaOnlyRun
+        PythonVanillaRun,
+        PythonNoBBRun,
+        MatlabVanillaRun,
+        FEBenchmarkMinRun
     ]
 
     # optionals arguments for benchmark
     extra_args = {
-        'executors_per_node': 1
+        #'executors_per_node': 1
     }
 
     benchmarks = BenchmarkManager(
