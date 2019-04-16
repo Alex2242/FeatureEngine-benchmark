@@ -99,8 +99,8 @@ class FEBenchmarkRun(Benchmark):
 
     SPARK_DEFAULT_PARAMS = [
         "--driver-memory 4G",
-        "--executor-cores 1",
-        "--executor-memory 10G",
+        "--executor-cores 3",
+        "--executor-memory 5500M",
         "--conf spark.hadoop.mapreduce.input"\
             + ".fileinputformat.split.minsize=268435456"
     ]
@@ -144,8 +144,8 @@ class FEBenchmarkMinRun(SingleNodeBenchmark):
     SPARK_DEFAULT_PARAMS = [
         "--driver-memory 4G",
         "--executor-cores 1",
-        "--num-executors 1"
-        "--executor-memory 10G",
+        "--num-executors 1 ",
+        "--executor-memory 80G",
         "--class org.oceandataexplorer.engine.benchmark.SPM",
         "--conf spark.hadoop.mapreduce.input"\
             + ".fileinputformat.split.minsize=268435456"
@@ -417,10 +417,7 @@ if __name__ == "__main__":
 
     # put the classes that should be run during benchmark here
     benchmarks = [
-        PythonVanillaRun,
-        PythonNoBBRun,
-        MatlabVanillaRun,
-        FEBenchmarkMinRun
+        FEBenchmarkRun
     ]
 
     # optionals arguments for benchmark
