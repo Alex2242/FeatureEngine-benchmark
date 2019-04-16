@@ -183,7 +183,7 @@ class ScalaOnlyRun(SingleNodeBenchmark):
 
     JAR_LOCATION = (
         " FeatureEngine-benchmark/target/"
-        "scala-2.11/FeatureEngine-benchmark-assembly-0.1-with_scala-256_128_256_1.jar "
+        "scala-2.11/FeatureEngine-benchmark-assembly-0.1-with_scala-1024_0_1024_30.jar "
     )
 
     def __init__(
@@ -417,7 +417,12 @@ if __name__ == "__main__":
 
     # put the classes that should be run during benchmark here
     benchmarks = [
-        FEBenchmarkRun
+        new_mt_run(ScalaOnlyRun, 1),
+        new_mt_run(ScalaOnlyRun, 2),
+        new_mt_run(ScalaOnlyRun, 4),
+        new_mt_run(ScalaOnlyRun, 8),
+        new_mt_run(ScalaOnlyRun, 16),
+        new_mt_run(ScalaOnlyRun, 24)
     ]
 
     # optionals arguments for benchmark
