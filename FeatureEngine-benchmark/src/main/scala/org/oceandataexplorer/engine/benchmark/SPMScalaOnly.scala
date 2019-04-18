@@ -51,13 +51,13 @@ object SPMScalaOnly {
 
 
     // Signal processing parameters
-    val recordSizeInSec = 1800.0f
+    val recordSizeInSec = 1.0f
     val soundSamplingRate = 32768.0f
     val recordSizeInFrame = (recordSizeInSec * soundSamplingRate).toInt
     val recordSize = (recordSizeInSec * soundSamplingRate).toInt
-    val windowSize = 4096
-    val windowOverlap = 0
-    val nfft = 4096
+    val windowSize = 256
+    val windowOverlap = 128
+    val nfft = 256
     val lowFreqTOL = Some(0.2 * soundSamplingRate)
     val highFreqTOL = Some(0.4 * soundSamplingRate)
 
