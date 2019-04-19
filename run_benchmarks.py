@@ -24,55 +24,48 @@ from time import time
 from abc import ABC, abstractmethod
 
 
+def announce(s):
+    print("*" * 15 + "   {}   ".format(s) + "*" * 15)
+
 class Benchmark(ABC):
     VERSION = None
-    PRINT_STR = "*" * 15 + "   {}   " + "*" * 15
-
-    @staticmethod
-    def print(s):
-        print("")
-        print(Benchmark.PRINT_STR.format(s))
 
     def __init__(
-        self, n_nodes, n_files, input_base_dir, output_base_dir
+        self, n_nodes, n_files, input_base_dir, output_base_dir, **kwargs
     ):
-        self.run_command = None
-
-        self.n_files = n_files
-        self.n_nodes = n_nodes
-        self.input_base_dir = input_base_dir
-        self.output_base_dir = output_base_dir
-
-        self.params = " {} {} {} {} ".format(self.n_nodes, self.n_files,
-            self.input_base_dir, self.output_base_dir)
 
         self.duration = -1
+        self.n_files = n_files
+        self.n_nodes = n_nodes
+        self.dry_run = kwargs.get("dry_run", False)
+
+        self.job_params = [str(p) for p in [n_nodes, self.n_files,
+            input_base_dir, output_base_dir]]
+
+        if hasattr(self, 'N_THREADS'):
+            self.job_params.append(str(self.N_THREADS))
+
+        self.run_command = self.BASE_COMMAND.format(" ".join(self.job_params))
 
     def run(self):
-        Benchmark.print("Starting {} benchmark with {} files".format(self.VERSION, self.n_files))
-        print("Running command: {}\n\n".format(self.run_command))
+        announce("Starting {} benchmark with {} files".format(self.VERSION, self.n_files))
+        print("Running command: {}".format(self.run_command))
         sys.stdout.flush()
 
         t_start = time()
 
-        #return_code = os.system(self.run_command)
-        #return_code = subprocess.call(self.run_command, shell=True)
-        p = Popen(self.run_command, shell=True)
-        p.wait()
+        if not self.dry_run:
+            p = Popen(self.run_command, shell=True)
+            p.wait()
 
-        return_code = p.returncode
-        print("")
+            if (p.return_code != 0):
+                print("Run failed !!!")
+                sys.exit(1)
 
-        t_end = time()
+        self.duration = time() - t_start
 
-        if (return_code != 0):
-            print("Run failed\nused command:\n" + self.run_command)
-            sys.exit(1)
-
-        self.duration = t_end - t_start
-
-        Benchmark.print("Benchmark {} with {} files, completed in {}s with code {}".format(
-            self.VERSION, self.n_files, self.duration, return_code))
+        announce("Benchmark {} with {} files, completed in {} sec".format(
+            self.VERSION, self.n_files, self.duration))
 
         print("\n\n")
         sys.stdout.flush()
@@ -84,64 +77,31 @@ class Benchmark(ABC):
             str(self.duration)
         ]
 
-class SingleNodeBenchmark(Benchmark):
-    def __init__(self, n_nodes, n_files, input_base_dir, output_base_dir):
-        if n_nodes != 1:
-            raise Exception(
-                self.VERSION + " doesn't cannot scale out !"
-            )
-        super(SingleNodeBenchmark, self).__init__(
-            n_nodes, n_files, input_base_dir, output_base_dir
-        )
-
-class FEBenchmarkRun(Benchmark):
+class FEBenchmark(Benchmark):
     VERSION = "feature_engine_benchmark"
 
-    SPARK_DEFAULT_PARAMS = [
+    SPARK_PARAMS = [
         "--driver-memory 4G",
         "--executor-cores 3",
+        "--num-executors 17",
         "--executor-memory 5500M",
+        "--class org.oceandataexplorer.engine.benchmark.SPM",
         "--conf spark.hadoop.mapreduce.input"\
             + ".fileinputformat.split.minsize=268435456"
     ]
 
-    CLASS = "--class org.oceandataexplorer.engine.benchmark.SPM"
-
     FE_JAR_LOCATION = (
-        " FeatureEngine-benchmark/target/"
-        "scala-2.11/FeatureEngine-benchmark-assembly-0.1-with_scala-256_128_256_1.jar "
+        " FeatureEngine-benchmark/target/scala-2.11/"
+        "FeatureEngine-benchmark-assembly-0.1.jar "
     )
 
-    def __init__(
-        self,
-        n_nodes,
-        n_files,
-        input_base_dir,
-        output_base_dir,
-        **kwargs
-    ):
-        super(FEBenchmarkRun, self).__init__(
-            n_nodes, n_files, input_base_dir, output_base_dir
-        )
+    BASE_COMMAND = "spark-submit " + " ".join(SPARK_PARAMS)\
+        + FE_JAR_LOCATION + " {}"
 
-        executors_param = " --num-executors {} ".format(
-            n_nodes * kwargs.get("executors_per_node", 17)
-        )
-
-        spark_params = " ".join(
-            kwargs.get("spark_params", self.SPARK_DEFAULT_PARAMS)
-            + [executors_param]
-            + [self.CLASS]
-        )
-
-        self.run_command = "spark-submit "\
-            + spark_params\
-            + self.FE_JAR_LOCATION + self.params
-
-class FEBenchmarkMinRun(SingleNodeBenchmark):
+class FEMinBenchmark(Benchmark):
     VERSION = "feature_engine_benchmark_min"
 
-    SPARK_DEFAULT_PARAMS = [
+    SPARK_PARAMS = [
         "--driver-memory 4G",
         "--executor-cores 1",
         "--num-executors 1 ",
@@ -153,28 +113,13 @@ class FEBenchmarkMinRun(SingleNodeBenchmark):
 
     FE_JAR_LOCATION = (
         " FeatureEngine-benchmark/target/"
-        "scala-2.11/FeatureEngine-benchmark-assembly-0.1-with_scala-256_128_256_1.jar "
+        "scala-2.11/FeatureEngine-benchmark-assembly-0.1.jar "
     )
 
-    def __init__(
-        self,
-        n_nodes,
-        n_files,
-        input_base_dir,
-        output_base_dir,
-        spark_params=None,
-        **kwargs
-    ):
-        super(FEBenchmarkMinRun, self).__init__(
-            n_nodes, n_files, input_base_dir, output_base_dir
-        )
+    BASE_COMMAND = "spark-submit " + " ".join(SPARK_PARAMS)\
+        + FE_JAR_LOCATION + " {}"
 
-        self.run_command = "spark-submit "\
-            + " ".join(self.SPARK_DEFAULT_PARAMS)\
-            + self.FE_JAR_LOCATION + self.params
-
-
-class ScalaOnlyRun(SingleNodeBenchmark):
+class ScalaOnlyBenchmark(Benchmark):
     # "scala_only" designates single threaded runs, equivalent to "scala_only_1"
     VERSION = "scala_only"
     # number of threads used is statically defined,
@@ -183,177 +128,74 @@ class ScalaOnlyRun(SingleNodeBenchmark):
 
     JAR_LOCATION = (
         " FeatureEngine-benchmark/target/"
-        "scala-2.11/FeatureEngine-benchmark-assembly-0.1-with_scala-1024_0_1024_30.jar "
+        "scala-2.11/FeatureEngine-benchmark-assembly-0.1.jar "
     )
 
-    def __init__(
-        self,
-        n_nodes,
-        n_files,
-        input_base_dir,
-        output_base_dir,
-        **kwargs
-    ):
-        super(ScalaOnlyRun, self).__init__(
-            n_nodes, n_files, input_base_dir, output_base_dir
-        )
-
-        self.run_command = (
-            "java -Xms64g -Xmx100g -classpath " + self.JAR_LOCATION +
-            "org.oceandataexplorer.engine.benchmark.SPMScalaOnly " + self.params +
-            " {} ".format(self.N_THREADS)
-        )
+    BASE_COMMAND =  "java -Xms64g -Xmx100g -classpath " + JAR_LOCATION\
+            + "org.oceandataexplorer.engine.benchmark.SPMScalaOnly {} "
 
 
-class PythonVanillaRun(SingleNodeBenchmark):
+
+class PythonVanillaBenchmark(Benchmark):
     VERSION = "python_vanilla"
+    BASE_COMMAND =  "cd python_benchmark_workflow && python3 spm_vanilla.py {} "
 
-    def __init__(
-        self,
-        n_nodes,
-        n_files,
-        input_base_dir,
-        output_base_dir,
-        **kwargs
-    ):
-        super(PythonVanillaRun, self).__init__(
-            n_nodes, n_files, input_base_dir, output_base_dir
-        )
-        self.run_command = (
-            "cd python_benchmark_workflow && "
-            "python3 spm_vanilla.py " + self.params
-        )
-
-
-class PythonNoBBRun(SingleNodeBenchmark):
+class PythonNoBBBenchmark(Benchmark):
     VERSION = "python_nobb"
+    BASE_COMMAND =  "cd python_benchmark_workflow && python3 spm_nobb.py {} "
 
-    def __init__(
-        self,
-        n_nodes,
-        n_files,
-        input_base_dir,
-        output_base_dir,
-        **kwargs
-    ):
-        super(PythonNoBBRun, self).__init__(
-            n_nodes, n_files, input_base_dir, output_base_dir
-        )
-        self.run_command = (
-            "cd python_benchmark_workflow && "
-            "python3 spm_nobb.py " + self.params
-        )
 
-class PythonMTRun(SingleNodeBenchmark):
+class PythonMTBenchmark(Benchmark):
     # "python_mt" designates single threaded runs, equivalent to "python_mt_1"
     VERSION = "python_mt"
+    BASE_COMMAND =  "cd python_benchmark_workflow && python3 spm_mt.py {} "
     # number of threads used is statically defined,
     # subclassing and overriding is the recommended way to change it
     N_THREADS = 1
 
-    def __init__(
-        self,
-        n_nodes,
-        n_files,
-        input_base_dir,
-        output_base_dir,
-        **kwargs
-    ):
-        super(PythonMTRun, self).__init__(
-            n_nodes, n_files, input_base_dir, output_base_dir
-        )
-        self.run_command = (
-            "cd python_benchmark_workflow && "
-            "python3 spm_mt.py " + self.params + " {} ".format(self.N_THREADS)
-        )
-
-
-class MatlabVanillaRun(SingleNodeBenchmark):
+class MatlabVanillaBenchmark(Benchmark):
     VERSION = "matlab_vanilla"
+    BASE_COMMAND =  (
+        "cd Matlab-workflow && "
+        "matlab -nodisplay -nosplash -nodesktop "
+        "-r \"spm_vanilla {}; exit\""
+    )
 
-    def __init__(
-        self,
-        n_nodes,
-        n_files,
-        input_base_dir,
-        output_base_dir,
-        **kwargs
-    ):
-        super(MatlabVanillaRun, self).__init__(
-            n_nodes, n_files, input_base_dir, output_base_dir
-        )
-        self.run_command = (
-            "cd Matlab-workflow && "
-            "/appli/ensta/matlab/R2016b/bin/matlab "
-            "-nodisplay -nosplash -nodesktop "
-            "-r \"spm_vanilla {}; exit\" ".format(self.params)
-        )
-
-class MatlabMTRun(SingleNodeBenchmark):
+class MatlabMTBenchmark(Benchmark):
     # "matlab_mt" designates single threaded runs, equivalent to "matlab_mt_1"
     VERSION = "matlab_mt"
+    BASE_COMMAND =  (
+        "cd Matlab-workflow && "
+        "matlab -nodisplay -nosplash -nodesktop "
+        "-r \"spm_vanilla {}; exit\""
+    )
     # number of threads used is statically defined,
     # subclassing and overriding is the recommended way to change it
     N_THREADS = 1
 
-    def __init__(
-        self,
-        n_nodes,
-        n_files,
-        input_base_dir,
-        output_base_dir,
-        **kwargs
-    ):
-        super(MatlabMTRun, self).__init__(
-            n_nodes, n_files, input_base_dir, output_base_dir
-        )
-        self.run_command = (
-            "cd Matlab-workflow && "
-            "/appli/ensta/matlab/R2016b/bin/matlab "
-            "-nodisplay -nosplash -nodesktop "
-            "-r \"spm_mt {}; exit\" ".format(self.params + " {} ".format(self.N_THREADS))
-        )
 
 class BenchmarkManager(object):
-    RUNS = {
-        1: [1, 5, 10],
-        2: [1, 5, 10, 20]
-    }
-
-    BENCHMARK_CLASSES = [
-        FEBenchmarkRun,
-        PythonNoBBRun,
-        PythonVanillaRun,
-        MatlabVanillaRun
-    ]
-
     def __init__(
         self,
         n_nodes,
         input_base_dir,
         output_base_dir,
-        runs=None,
-        benchmark_classes=None,
-        extra_args=None
+        runs,
+        benchmark_classes,
+        **kwargs
     ):
         self.n_nodes = n_nodes
         self.input_base_dir = input_base_dir
         self.output_base_dir = output_base_dir
         self.benchmarks = []
         self.results = []
-        self.extra_args = extra_args if extra_args else {}
+        self.extra_args = kwargs
 
-        self.init_benchmarks(
-            runs if runs else self.RUNS,
-            benchmark_classes if benchmark_classes else self.BENCHMARK_CLASSES
-        )
+        self.init_benchmarks(runs, benchmark_classes)
 
     def init_benchmarks(self, runs, benchmark_classes):
         for n_files in runs[self.n_nodes]:
             for benchmark_class in benchmark_classes:
-                if issubclass(benchmark_class, SingleNodeBenchmark) and self.n_nodes is not 1:
-                    continue
-
                 self.benchmarks.append(benchmark_class(
                     self.n_nodes,
                     n_files,
@@ -363,12 +205,14 @@ class BenchmarkManager(object):
                 ))
 
     def run_benchmarks(self):
+        t_start = time()
+
         for benchmark in self.benchmarks:
             result = benchmark.run()
             self.results.append(result)
 
         print("\n" * 4)
-        print("*" * 15 + "  Benchmarks completed  " + "*" * 15)
+        print("*" * 15 + "  Benchmarks completed  in {} sec".format(time() - t_start) + "*" * 15)
 
     def save_as_csv(self, result_file_path):
         csv_string = "\n".join([",".join(result) for result in self.results])
@@ -404,22 +248,26 @@ if __name__ == "__main__":
         tag = sys.argv[4]
 
     runs = {
-        1: [1, 2, 5, 10, 25, 50, 75, 100]
+        1: [1, 2, 5, 10, 25, 50, 75, 100],
+        2:  [5, 10, 25, 50, 75, 100, 200],
+        4:  [50, 75, 100, 200, 400],
+        8:  [100, 200, 400, 800, 1600],
     }
 
     # put the classes that should be run during benchmark here
     benchmarks = [
-        new_mt_run(MatlabMTRun, 1),
-        new_mt_run(MatlabMTRun, 2),
-        new_mt_run(MatlabMTRun, 4),
-        new_mt_run(MatlabMTRun, 8),
-        new_mt_run(MatlabMTRun, 16),
-        new_mt_run(MatlabMTRun, 24)
+        FEBenchmark,
+        FEMinBenchmark,
+        PythonVanillaBenchmark,
+        PythonNoBBBenchmark,
+        new_mt_run(PythonMTBenchmark, 2),
+        MatlabVanillaBenchmark,
+        new_mt_run(MatlabMTBenchmark, 2)
     ]
 
     # optionals arguments for benchmark
     extra_args = {
-        #'executors_per_node': 1
+        #'dry_run': True
     }
 
     benchmarks = BenchmarkManager(
@@ -428,10 +276,11 @@ if __name__ == "__main__":
         output_base_dir,
         runs,
         benchmarks,
-        extra_args
+        **extra_args
     )
 
     benchmarks.run_benchmarks()
 
-    benchmarks.save_as_csv(
-        output_base_dir + "/times/benchmark_durations_{}node_{}.csv".format(n_nodes, tag))
+    if not extra_args.get('dry_run', False):
+        benchmarks.save_as_csv(
+            output_base_dir + "/times/benchmark_durations_{}node_{}.csv".format(n_nodes, tag))
