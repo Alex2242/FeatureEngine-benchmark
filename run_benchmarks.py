@@ -212,7 +212,7 @@ class BenchmarkManager(object):
             self.results.append(result)
 
         print("\n" * 4)
-        print("*" * 15 + "  Benchmarks completed  in {} sec".format(time() - t_start) + "*" * 15)
+        announce(time() - t_start)
 
     def save_as_csv(self, result_file_path):
         csv_string = "\n".join([",".join(result) for result in self.results])
