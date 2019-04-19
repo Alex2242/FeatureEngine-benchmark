@@ -267,24 +267,6 @@ class PythonMTRun(SingleNodeBenchmark):
             "python3 spm_mt.py " + self.params + " {} ".format(self.N_THREADS)
         )
 
-class PythonMTNoTolRun(SingleNodeBenchmark):
-    VERSION = "python_mtnotol"
-
-    def __init__(
-        self,
-        n_nodes,
-        n_files,
-        input_base_dir,
-        output_base_dir,
-        **kwargs
-    ):
-        super(PythonMTNoTolRun, self).__init__(
-            n_nodes, n_files, input_base_dir, output_base_dir
-        )
-        self.run_command = (
-            "cd python_benchmark_workflow && "
-            "python3 spm_mtnotol.py " + self.params
-        )
 
 class MatlabVanillaRun(SingleNodeBenchmark):
     VERSION = "matlab_vanilla"
@@ -301,10 +283,35 @@ class MatlabVanillaRun(SingleNodeBenchmark):
             n_nodes, n_files, input_base_dir, output_base_dir
         )
         self.run_command = (
-            "cd Matlab-workflow/vanilla && "
+            "cd Matlab-workflow && "
             "/appli/ensta/matlab/R2016b/bin/matlab "
             "-nodisplay -nosplash -nodesktop "
-            "-r \"spm {}; exit\" ".format(self.params)
+            "-r \"spm_vanilla {}; exit\" ".format(self.params)
+        )
+
+class MatlabMTRun(SingleNodeBenchmark):
+    # "matlab_mt" designates single threaded runs, equivalent to "matlab_mt_1"
+    VERSION = "matlab_mt"
+    # number of threads used is statically defined,
+    # subclassing and overriding is the recommended way to change it
+    N_THREADS = 1
+
+    def __init__(
+        self,
+        n_nodes,
+        n_files,
+        input_base_dir,
+        output_base_dir,
+        **kwargs
+    ):
+        super(MatlabMTRun, self).__init__(
+            n_nodes, n_files, input_base_dir, output_base_dir
+        )
+        self.run_command = (
+            "cd Matlab-workflow && "
+            "/appli/ensta/matlab/R2016b/bin/matlab "
+            "-nodisplay -nosplash -nodesktop "
+            "-r \"spm_mt {}; exit\" ".format(self.params + " {} ".format(self.N_THREADS))
         )
 
 class BenchmarkManager(object):
@@ -369,21 +376,6 @@ class BenchmarkManager(object):
         f.write(csv_string)
         f.close()
 
-# temp classes
-
-class FEBenchmarkRunWS(FEBenchmarkRun):
-    """
-    Computes Welch & SPL
-    """
-    VERSION = 'fe_welchspl'
-    CLASS = "--class org.oceandataexplorer.engine.benchmark.SPMWS"
-
-class FEBenchmarkRunWSLegacy(FEBenchmarkRun):
-    """
-    Computes Welch & SPL without sort or persist, old method
-    """
-    VERSION = 'fe_welchspl'
-    CLASS = "--class org.oceandataexplorer.engine.benchmark.SPMWSLegacy"
 
 def new_mt_run(MTBaseClass, n_threads):
     """
@@ -417,12 +409,12 @@ if __name__ == "__main__":
 
     # put the classes that should be run during benchmark here
     benchmarks = [
-        new_mt_run(ScalaOnlyRun, 1),
-        new_mt_run(ScalaOnlyRun, 2),
-        new_mt_run(ScalaOnlyRun, 4),
-        new_mt_run(ScalaOnlyRun, 8),
-        new_mt_run(ScalaOnlyRun, 16),
-        new_mt_run(ScalaOnlyRun, 24)
+        new_mt_run(MatlabMTRun, 1),
+        new_mt_run(MatlabMTRun, 2),
+        new_mt_run(MatlabMTRun, 4),
+        new_mt_run(MatlabMTRun, 8),
+        new_mt_run(MatlabMTRun, 16),
+        new_mt_run(MatlabMTRun, 24)
     ]
 
     # optionals arguments for benchmark
